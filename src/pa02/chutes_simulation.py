@@ -7,7 +7,9 @@ __email__ = 'christibr@nmbu.no', 'mvaloy@nmbu.no'
 
 class Board:
     """
-    Creates a standard board for the snakes and ladders game if not specified
+    Creates a board for the snakes and ladders game. The standard board
+    consists of default ladders and snakes as well as a default goal. The
+    standard board is created by default.
     """
 
     def __init__(self,
@@ -21,7 +23,7 @@ class Board:
         self.goal = goal
 
     def goal_reached(self, position):
-        """ Return True if the goal is reached"""
+        """ Return True if the goal is reached, and False otherwise. """
         if self.goal <= position:
             return True
         else:
@@ -38,10 +40,11 @@ class Board:
         Returns
         -------
         0:
-            if player not at the start of a snake or ladder
+            if the players position is not at the start of a snake or ladder
         num_step:
+            if the players position is at the start of a snake or ladder, the
             number of position the player must move forward or backward due to
-            a ladder or a snake
+            a ladder or a snake is returned
 
         """
         for inner_tuple1, inner_tuple2 in zip(self.ladders, self.chutes):
@@ -53,29 +56,40 @@ class Board:
 
 
 class Player:
+    """
+    Creates a player with a specified board (the standard board is default),
+    and keeps track of the players position.
+    """
     def __init__(self, board=Board()):
         self.board = board
         self.position = 0
 
     def move(self):
-        """Moved the player by implementing a dice cast, the following move
-        and, if necessary, a move up a ladder or down a snake."""
+        """
+        Moves the player by implementing a dice cast. If the players position,
+        after the dice cast, is at the start of a ladder or a snake, the
+        players position is updated accordingly.
+        """
         throw = random.randint(1, 6)
         self.position += throw
         self.position += self.board.position_adjustment(self.position)
 
 
 class ResilientPlayer(Player):
-    """Subclass of Player, takes extra steps for the next move, but only after
-    the player has gone down a snake."""
+    """
+    Subclass of Player, takes extra steps for the next move, but only after
+    the player has gone down a snake.
+    """
     def __init__(self, board=Board(), extra_steps=1):
         super().__init__(board)
         self.extra_steps = extra_steps
         self.extra_move_flag = False
 
     def move(self):
-        """If the player is at the bottom of a snake, it takes a given
-        number of extra steps."""
+        """
+        If the player is at the bottom of a snake, it takes a given
+        number of extra steps in the next move.
+        """
         throw = random.randint(1, 6)
         if self.extra_move_flag:
             throw += self.extra_steps
@@ -90,16 +104,21 @@ class ResilientPlayer(Player):
 
 
 class LazyPlayer(Player):
-    """Subclass of Player, takes a step less for the next move, but only
-    after going up a ladder"""
+    """
+    Subclass of Player, takes a given number of steps less for the next move,
+    but only after going up a ladder.
+    """
     def __init__(self, board=Board(), dropped_steps=1):
         super().__init__(board)
         self.dropped_steps = dropped_steps
         self.dropped_steps_flag = False
 
     def move(self):
-        """If the player is at the top of a ladder, it takes a given
-        number of steps less."""
+        """
+        If the player is at the top of a ladder, it takes a given
+        number of steps less. The player will not move if the dropped
+        steps are greater than the dice cast.
+        """
         throw = random.randint(1, 6)
         if self.dropped_steps_flag:
             if self.dropped_steps > throw:
@@ -117,6 +136,12 @@ class LazyPlayer(Player):
 
 
 class Simulation:
+    """
+    Implements an entire simulation of the snakes and ladders game.
+    Default simulation consists of two standard players with standard
+    boards, no seed and randomised order of the players at the start of each
+    game.
+    """
     default_player = [Player, Player]
 
     def __init__(self,
@@ -134,14 +159,12 @@ class Simulation:
         self.randomize_players = randomize_players
 
         self.results = []
+        self.player_field_no_duplicate = list(dict.fromkeys(self.player_field))
 
     def single_game(self):
         """
-
-        Returns
-        -------
-        a tuple consisting of the number of moves and the type of the winner
-
+        Runs a single game with the players and returns a tuple consisting of
+        the number of moves and the type of the winner.
         """
         list_players = []
         for player_class in self.player_field:
@@ -164,22 +187,14 @@ class Simulation:
 
     def run_simulation(self, num_games):
         """
-        Runs a given number of games
-
-        Parameters
-        ----------
-        num_games:
-            number of games to play
-
+        Runs a given number of games, stores the result and returns nothing.
         """
         for game in range(num_games):
             self.results.append(self.single_game())
 
     def get_results(self):
         """
-        Returns all result generated by run_simulation() calls so far so far
-        a list of result tuples.
-
+        Returns all results stored by run_simulation() as a list of tuples.
         """
         if not self.results:
             raise RuntimeError('run_simulation() must be called first')
@@ -188,15 +203,13 @@ class Simulation:
 
     def winners_per_type(self):
         """
-        Returns a dictionary mapping player types to the number of wins.
+        Returns a dictionary with the player type and number of wins per type.
         """
         result_dict = {}
         for player in self.player_field:
             result_dict[player.__name__] = 0
 
-        player_field_no_duplicate = list(dict.fromkeys(self.player_field))
-
-        for player in player_field_no_duplicate:
+        for player in self.player_field_no_duplicate:
             for inner_tuple in self.results:
                 if player.__name__ == inner_tuple[1]:
                     result_dict[player.__name__] += 1
@@ -205,17 +218,14 @@ class Simulation:
 
     def durations_per_type(self):
         """
-        Returns a dictionary mapping player types to lists of game durations
-        for that type
-
+        Returns a dictionary with the player types and lists of game durations
+        per type.
         """
         duration_dict = {}
         for player in self.player_field:
             duration_dict[player.__name__] = []
 
-        player_field_no_duplicate = list(dict.fromkeys(self.player_field))
-
-        for player in player_field_no_duplicate:
+        for player in self.player_field_no_duplicate:
             for inner_tuple in self.results:
                 if player.__name__ == inner_tuple[1]:
                     duration_dict[player.__name__].append(inner_tuple[0])
@@ -224,16 +234,18 @@ class Simulation:
 
     def players_per_type(self):
         """
-        Returns a dictionary showing how many players of each type participate.
+        Returns a dictionary with the player types and number of participants
+        per type.
         """
-        players_dict = {'Player': 0, 'LazyPlayer': 0, 'ResilientPlayer': 0}
+        players_dict = {}
         for player in self.player_field:
-            if player.__name__ == 'Player':
-                players_dict['Player'] += 1
-            elif player.__name__ == 'LazyPlayer':
-                players_dict['LazyPlayer'] += 1
-            else:
-                players_dict['ResilientPlayer'] += 1
+            players_dict[player.__name__] = 0
+
+        for player in self.player_field_no_duplicate:
+            for player_original in self.player_field:
+                if player == player_original:
+                    players_dict[player.__name__] += 1
+
         return players_dict
 
 
@@ -243,3 +255,4 @@ if __name__ == '__main__':
     sim.run_simulation(13)
     print(sim.winners_per_type())
     print(sim.durations_per_type())
+    print(sim.players_per_type())

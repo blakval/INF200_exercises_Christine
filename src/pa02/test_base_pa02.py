@@ -1,18 +1,24 @@
 # -*- coding: utf-8 -*-
+
 """
 Minimal set of compatibility tests for PA02.
+
+Source: https://github.com/yngvem/INF200-2019-Exercises/tree/master/src
+/YOUR_NAME_ex/pa02
 """
+
 __author__ = 'Hans Ekkehard Plesser'
 __email__ = 'hans.ekkehard.plesser@nmbu.no'
 
-import src.pa02.chutes_simulations as cs
-# import pytest
+
+import src.pa02.chutes_simulation as cs
 
 
 class TestBoard:
     """
     Tests for Board class.
     """
+
     def test_constructor_default(self):
         """Default constructor callable."""
         b = cs.Board()
@@ -44,6 +50,7 @@ class TestPlayer:
     """
     Tests for Player class.
     """
+
     def test_constructor(self):
         """Player can be constructed."""
         b = cs.Board()
